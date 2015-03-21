@@ -108,9 +108,13 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < image_files.size(); i++) {
     // Create the pruned image filename and create an image index.
     std::string filename;
-    CHECK(theia::GetFilenameFromFilepath(image_files[i], false, &filename));
+    CHECK(theia::GetFilenameFromFilepath(image_files[i], true, &filename));
     pruned_image_files[i] = filename;
-    image_name_to_id[filename] = i;
+
+    std::string filename_no_extension;
+    CHECK(theia::GetFilenameFromFilepath(image_files[i], false,
+                                         &filename_no_extension));
+    image_name_to_id[filename_no_extension] = i;
   }
 
   // Read all putatative matches one by one.
@@ -140,7 +144,7 @@ int main(int argc, char *argv[]) {
     match1.GetMatchedImageList(matched_images);
     for (const std::string& match2 : matched_images) {
       std::string filename2;
-      CHECK(theia::GetFilenameFromFilepath(match2, false, &filename2));
+      CHECK(theia::GetFilenameFromFilepath(match2, true, &filename2));
 
       // Do not visit a match twice!
       if (theia::ContainsKey(visited_images, filename2)) {

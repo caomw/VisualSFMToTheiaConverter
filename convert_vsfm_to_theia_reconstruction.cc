@@ -76,10 +76,14 @@ void ConvertVSFMReconstructionToTheiaReconstruction(
 
   // Add all cameras to the reconstruction.
   for (int i = 0; i < vsfm_reconstruction.camera_data.size(); i++) {
-    const CameraT& vsfm_camera = vsfm_reconstruction.camera_data[i];
+    std::string view_name;
+    theia::GetFilenameFromFilepath(vsfm_reconstruction.view_names[i],
+                                   true,
+                                   &view_name);
+    LOG(INFO) << "Adding view " << view_name;
 
-    const ViewId view_id =
-        theia_reconstruction->AddView(vsfm_reconstruction.view_names[i]);
+    const CameraT& vsfm_camera = vsfm_reconstruction.camera_data[i];
+    const ViewId view_id = theia_reconstruction->AddView(view_name);
     CHECK_NE(view_id, theia::kInvalidViewId);
     View* view = theia_reconstruction->MutableView(view_id);
     view->SetEstimated(true);
@@ -88,7 +92,8 @@ void ConvertVSFMReconstructionToTheiaReconstruction(
 
     Eigen::Matrix3f rotation;
     vsfm_camera.GetMatrixRotation(rotation.data());
-    camera->SetOrientationFromRotationMatrix(rotation.cast<double>());
+    camera->SetOrientationFromRotationMatrix(
+        rotation.transpose().cast<double>());
 
     Eigen::Vector3f position;
     vsfm_camera.GetCameraCenter(position.data());
