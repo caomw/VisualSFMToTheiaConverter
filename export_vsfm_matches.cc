@@ -27,6 +27,8 @@ Eigen::Matrix3d GetEigen3x3Matrix(const float mat[3][3]) {
 
 bool ReadVSFMMatches(const std::string& match_file,
                      const visual_sfm::FeatureData& sift1,
+                     theia::CameraIntrinsicsPrior* prior1,
+                     theia::CameraIntrinsicsPrior* prior2,
                      visual_sfm::MatchFile* base_image,
                      theia::ImagePairMatch* match) {
   // Load SIFT location data.
@@ -84,8 +86,14 @@ bool ReadVSFMMatches(const std::string& match_file,
   }
 
   // Set params.
+  prior1->focal_length.is_set = true;
+  prior1->focal_length.value = focal_length1;
   match->twoview_info.focal_length_1 = focal_length1;
+
+  prior2->focal_length.is_set = true;
+  prior2->focal_length.value = focal_length2;
   match->twoview_info.focal_length_2 = focal_length2;
+
   match->twoview_info.position_2 = -rotation.transpose() * translation;
   const Eigen::AngleAxisd rotation_aa(rotation);
   match->twoview_info.rotation_2 = rotation_aa.angle() * rotation_aa.axis();
@@ -156,7 +164,13 @@ int main(int argc, char *argv[]) {
       image_pair_match.image1_index = i;
       image_pair_match.image2_index =
           theia::FindOrDie(image_name_to_id, filename2);
-      if (ReadVSFMMatches(match2, sift1, &match1, &image_pair_match)) {
+      if (ReadVSFMMatches(
+              match2,
+              sift1,
+              &intrinsics[image_pair_match.image1_index],
+              &intrinsics[image_pair_match.image2_index],
+              &match1,
+              &image_pair_match)) {
         LOG(INFO) << "Matched image " << filename1 << " to image " << filename2
                   << " with " << image_pair_match.correspondences.size()
                   << " inliers.";
