@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < image_files.size(); i++) {
     // Open the match file (remove the extension).
     const std::string base_filepath =
-        image_files[i].substr(0, image_files[i].find_last_of("."));
+      image_files[i].substr(0, image_files[i].find_last_of("."));
     const std::string filename1 = pruned_image_files[i];
     visited_images.insert(filename1);
 
@@ -151,26 +151,21 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> matched_images;
     match1.GetMatchedImageList(matched_images);
     for (const std::string& match2 : matched_images) {
-      std::string filename2;
-      CHECK(theia::GetFilenameFromFilepath(match2, true, &filename2));
-
+      std::string image_name2;
+      CHECK(theia::GetFilenameFromFilepath(match2, true, &image_name2));
+      const int image2_id = theia::FindOrDie(image_name_to_id, image_name2);
+      const std::string filename2 = pruned_image_files[image2_id];
       // Do not visit a match twice!
-      if (theia::ContainsKey(visited_images, filename2)) {
+      if (theia::ContainsKey(visited_images, image_name2)) {
         continue;
       }
 
       // Read the match information.
       theia::ImagePairMatch image_pair_match;
-      image_pair_match.image1_index = i;
-      image_pair_match.image2_index =
-          theia::FindOrDie(image_name_to_id, filename2);
-      if (ReadVSFMMatches(
-              match2,
-              sift1,
-              &intrinsics[image_pair_match.image1_index],
-              &intrinsics[image_pair_match.image2_index],
-              &match1,
-              &image_pair_match)) {
+      image_pair_match.image1 = filename1;
+      image_pair_match.image2 = filename2;
+      if (ReadVSFMMatches(match2, sift1, &intrinsics[i], &intrinsics[image2_id],
+                          &match1, &image_pair_match)) {
         LOG(INFO) << "Matched image " << filename1 << " to image " << filename2
                   << " with " << image_pair_match.correspondences.size()
                   << " inliers.";
